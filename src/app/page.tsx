@@ -4,15 +4,23 @@ import { getSession } from "@/lib/get-session";
 import { getDashboardData } from "@/lib/dashboard";
 import DashboardClient from "@/components/DashboardClient";
 import type { Project, Task, ProjectOption } from "@/lib/dashboard-types";
+import { username } from "better-auth/plugins";
 
-async function DashboardData({ userId }: { userId: string }) {
+async function DashboardData({
+  userId,
+  userName,
+}: {
+  userId: string;
+  userName: string;
+}) {
   const { projects: dbProjects, tasks: dbTasks } =
     await getDashboardData(userId);
 
   const initialTasks: Task[] = dbTasks.map((task) => ({
     id: task.id,
     title: task.title,
-    project: task.project?.name ?? "No Project",
+    project: task.project?.name ?? "No project",
+    projectId: task.projectId,
     status:
       task.status === "COMPLETED"
         ? "Completed"
@@ -27,11 +35,13 @@ async function DashboardData({ userId }: { userId: string }) {
           day: "numeric",
         })
       : "No date",
+    dueDate: task.dueDate ? task.dueDate.toISOString().slice(0, 10) : null,
   }));
 
   const colors: Project["color"][] = ["violet", "blue", "emerald"];
 
   const projects: Project[] = dbProjects.map((project, index) => ({
+    id: project.id,
     name: project.name,
     tasks: project.tasks.length,
     completed: project.tasks.filter((task) => task.status === "COMPLETED")
@@ -49,6 +59,7 @@ async function DashboardData({ userId }: { userId: string }) {
       initialTasks={initialTasks}
       projects={projects}
       projectOptions={projectOptions}
+      userName={userName}
     />
   );
 }
@@ -84,5 +95,7 @@ async function AuthenticatedDashboard() {
     redirect("/login");
   }
 
-  return <DashboardData userId={session.user.id} />;
+  return (
+    <DashboardData userId={session.user.id} userName={session.user.name} />
+  );
 }

@@ -212,3 +212,160 @@ export async function createProject(input: { name: string }) {
   revalidatePath("/");
   return project;
 }
+
+export async function updateTask(input: {
+  id: string;
+  title: string;
+  projectId: string | null;
+  priority: "LOW" | "MEDIUM" | "HIGH";
+  dueDate: string;
+}) {
+  const session = await requireSession();
+  const title = input.title.trim();
+
+  if (!input.id || !title || title.length > 200) {
+    throw new Error(
+      "Provide a valid task and a title of up to 200 characters.",
+    );
+  }
+
+  if (!["LOW", "MEDIUM", "HIGH"].includes(input.priority)) {
+    throw new Error("Invalid task priority.");
+  }
+
+  const membership = await prisma.membership.findFirst({
+    where: { userId: session.user.id },
+    select: { workspaceId: true },
+  });
+
+  if (!membership) {
+    throw new Error("No workspace found.");
+  }
+
+  const existingTask = await prisma.task.findFirst({
+    where: {
+      id: input.id,
+      OR: [
+        { workspaceId: membership.workspaceId },
+        { project: { workspaceId: membership.workspaceId } },
+      ],
+    },
+    select: { id: true },
+  });
+
+  if (!existingTask) {
+    throw new Error("Task not found or access denied.");
+  }
+
+  if (input.projectId) {
+    const project = await prisma.project.findFirst({
+      where: {
+        id: input.projectId,
+        workspaceId: membership.workspaceId,
+      },
+      select: { id: true },
+    });
+
+    if (!project) {
+      throw new Error("Invalid project selection.");
+    }
+  }
+
+  let dueDate: Date | null = null;
+
+  if (input.dueDate) {
+    dueDate = new Date(`${input.dueDate}T12:00:00`);
+
+    if (Number.isNaN(dueDate.getTime())) {
+      throw new Error("Invalid due date.");
+    }
+  }
+
+  const updated = await prisma.task.update({
+    where: { id: existingTask.id },
+    data: {
+      title,
+      projectId: input.projectId || null,
+      priority: input.priority,
+      dueDate,
+    },
+    select: { id: true },
+  });
+
+  revalidatePath("/");
+  return updated;
+}
+
+export async function deleteTask(id: string) {
+  const session = await requireSession();
+
+  const membership = await prisma.membership.findFirst({
+    where: { userId: session.user.id },
+    select: { workspaceId: true },
+  });
+
+  if (!membership) {
+    throw new Error("No workspace found.");
+  }
+
+  const task = await prisma.task.findFirst({
+    where: {
+      id,
+      OR: [
+        { workspaceId: membership.workspaceId },
+        { project: { workspaceId: membership.workspaceId } },
+      ],
+    },
+    select: { id: true },
+  });
+
+  if (!task) {
+    throw new Error("Task not found or access denied.");
+  }
+
+  await prisma.task.delete({
+    where: { id: task.id },
+  });
+
+  revalidatePath("/");
+  return { id: task.id };
+}
+
+export async function deleteProject(id: string) {
+  const session = await requireSession();
+
+  const membership = await prisma.membership.findFirst({
+    where: { userId: session.user.id },
+    select: { workspaceId: true },
+  });
+
+  if (!membership) {
+    throw new Error("Workspace membership required.");
+  }
+
+  const project = await prisma.project.findFirst({
+    where: {
+      id,
+      workspaceId: membership.workspaceId,
+    },
+    select: { id: true },
+  });
+
+  if (!project) {
+    throw new Error("Project not found or access denied.");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.task.deleteMany({
+      where: {
+        projectId: project.id,
+      },
+    });
+
+    await tx.project.delete({
+      where: { id: project.id },
+    });
+  });
+
+  revalidatePath("/");
+}

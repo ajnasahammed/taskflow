@@ -16,6 +16,10 @@
 # Production builds
 /dist
 
+
+# Prisma generated client
+/src/generated/prisma/
+
 # Environment variables and secrets
 .env
 .env.*

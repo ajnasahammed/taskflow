@@ -31,18 +31,28 @@ import SideBar from "@/components/SideBar";
 import type { Project, Task, ProjectOption } from "@/lib/dashboard-types";
 import TaskList from "./TaskList";
 import ProjectProgress from "./ProjectProgress";
-import { setTaskCompletion, createTask, createProject } from "@/app/actions";
+import {
+  setTaskCompletion,
+  createTask,
+  createProject,
+  updateTask,
+  deleteTask,
+  deleteProject,
+} from "@/app/actions";
+import { RealTimeDateDisplay } from "./RealTimeDateDisplay";
 
 type DashboardClientProps = {
   initialTasks: Task[];
   projects: Project[];
   projectOptions: ProjectOption[];
+  userName:string;
 };
 
 export default function DashboardClient({
   initialTasks,
   projects,
   projectOptions,
+  userName
 }: DashboardClientProps) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [search, setSearch] = useState("");
@@ -67,6 +77,10 @@ export default function DashboardClient({
   const [isProjectSaving, setIsProjectSaving] = useState(false);
   const [projectFormError, setProjectFormError] = useState("");
 
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [isDeletingTask, setIsDeletingTask] = useState(false);
+  const [isDeletingProject, setIsDeletingProject] = useState(false);
+
   useEffect(() => {
     setTasks(initialTasks);
   }, [initialTasks]);
@@ -85,6 +99,8 @@ export default function DashboardClient({
       return matchesSearch && matchesNavigation;
     });
   }, [tasks, search, activeNav]);
+
+
 
   const completedCount = tasks.filter(
     (task) => task.status === "Completed",
@@ -124,6 +140,7 @@ export default function DashboardClient({
       alert("Couldn't save the task status. Please try again.");
     }
   }
+
   async function handleCreateTask(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError("");
@@ -133,28 +150,39 @@ export default function DashboardClient({
       return;
     }
 
-    setIsSaving(true);
-
     if (!selectedProjectId) {
       setFormError("Please select a project.");
       return;
     }
 
+    setIsSaving(true);
+
     try {
-      await createTask({
-        title: taskTitle,
-        projectId: selectedProjectId,
-        priority: taskPriority,
-        dueDate,
-      });
+      if (editingTask) {
+        await updateTask({
+          id: editingTask.id,
+          title: taskTitle.trim(),
+          projectId: selectedProjectId,
+          priority: taskPriority,
+          dueDate,
+        });
+      } else {
+        await createTask({
+          title: taskTitle.trim(),
+          projectId: selectedProjectId,
+          priority: taskPriority,
+          dueDate,
+        });
+      }
 
       setIsTaskFormOpen(false);
+      setEditingTask(null);
       router.refresh();
     } catch (error) {
       setFormError(
         error instanceof Error
           ? error.message
-          : "Unable to create the task. Please try again.",
+          : "Unable to save the task. Please try again.",
       );
     } finally {
       setIsSaving(false);
@@ -162,6 +190,7 @@ export default function DashboardClient({
   }
 
   function addTask() {
+    setEditingTask(null);
     setTaskTitle("");
     setSelectedProjectId(projectOptions[0]?.id ?? "");
     setTaskPriority("MEDIUM");
@@ -201,6 +230,62 @@ export default function DashboardClient({
       setIsProjectSaving(false);
     }
   }
+
+  function handleEditTask(task: Task) {
+    setTaskTitle(task.title);
+    setSelectedProjectId(task.projectId ?? "");
+    setTaskPriority(task.priority.toUpperCase() as "LOW" | "MEDIUM" | "HIGH");
+    setDueDate(task.dueDate ?? "");
+    setFormError("");
+    setEditingTask(task);
+    setIsTaskFormOpen(true);
+  }
+
+  async function handleDeleteTask(task: Task) {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${task.title}"? This cannot be undone.`,
+    );
+
+    if (!confirmed) return;
+
+    setIsDeletingTask(true);
+
+    try {
+      await deleteTask(task.id);
+      setTasks((current) => current.filter((item) => item.id !== task.id));
+      router.refresh();
+    } catch (error) {
+      alert(
+        error instanceof Error ? error.message : "Unable to delete this task.",
+      );
+    } finally {
+      setIsDeletingTask(false);
+    }
+  }
+
+  async function handleDeleteProject(project: Project) {
+    const confirmed = window.confirm(
+      `Delete "${project.name}" and all ${project.tasks} task(s) assigned to it? This cannot be undone.`,
+    );
+
+    if (!confirmed) return;
+
+    setIsDeletingProject(true);
+
+    try {
+      await deleteProject(project.id);
+      router.refresh();
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Unable to delete the project.",
+      );
+    } finally {
+      setIsDeletingProject(false);
+    }
+  }
+
 
   return (
     <div className="min-h-screen bg-[#f7f8fc] text-slate-900">
@@ -275,10 +360,10 @@ export default function DashboardClient({
             <section className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
               <div>
                 <p className="mb-2 text-sm font-medium text-indigo-600">
-                  WEDNESDAY, OCTOBER 14
+                  <RealTimeDateDisplay/>
                 </p>
                 <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                  Good morning, John 👋
+                  Good morning, {userName || "There"} 👋
                 </h1>
                 <p className="mt-2 text-sm text-slate-500 sm:text-base">
                   Here&apos;s what&apos;s happening with your projects today.
@@ -348,10 +433,19 @@ export default function DashboardClient({
             {/* Dashboard columns */}
             <div className="grid grid-cols-1 items-start gap-6 2xl:grid-cols-[1.5fr_1fr]">
               {/* Tasks */}
-              <TaskList tasks={visibleTasks} onToggleTask={toggleTask} />
+              <TaskList
+                tasks={visibleTasks}
+                onToggleTask={toggleTask}
+                onEditTask={handleEditTask}
+                onDeleteTask={handleDeleteTask}
+              />
 
               {/* Projects */}
-              <ProjectProgress projects={projects} />
+              <ProjectProgress
+                projects={projects}
+                onDeleteProject={handleDeleteProject}
+                isDeletingProject={isDeletingProject}
+              />
             </div>
 
             <footer className="py-8 text-center text-xs text-slate-400">
@@ -441,7 +535,9 @@ export default function DashboardClient({
           >
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold">Create a task</h2>
+                <h2 className="text-xl font-bold">
+                  {editingTask ? "Edit task" : "Create a task"}
+                </h2>
                 <p className="mt-1 text-sm text-slate-500">
                   Add a task to one of your projects.
                 </p>
@@ -562,7 +658,11 @@ export default function DashboardClient({
                 disabled={isSaving || projectOptions.length === 0}
                 className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isSaving ? "Saving..." : "Create task"}
+                {isSaving
+                  ? "Saving..."
+                  : editingTask
+                    ? "Save changes"
+                    : "Create task"}
               </button>
             </div>
           </form>
@@ -572,11 +672,11 @@ export default function DashboardClient({
   );
 }
 
-const navigation = [
-  { label: "Dashboard", icon: LayoutDashboard },
-  { label: "Projects", icon: FolderKanban },
-  { label: "My Tasks", icon: ClipboardList },
-  { label: "Calendar", icon: CalendarDays },
-  { label: "Team", icon: Users },
-  { label: "Settings", icon: Settings },
-];
+// const navigation = [
+//   { label: "Dashboard", icon: LayoutDashboard },
+//   { label: "Projects", icon: FolderKanban },
+//   { label: "My Tasks", icon: ClipboardList },
+//   { label: "Calendar", icon: CalendarDays },
+//   { label: "Team", icon: Users },
+//   { label: "Settings", icon: Settings },
+// ];

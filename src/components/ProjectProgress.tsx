@@ -1,14 +1,16 @@
-import { ArrowDownRight, ArrowRight, FolderKanban } from "lucide-react";
 
-export type Project = {
-  name: string;
-  tasks: number;
-  completed: number;
-  color: "violet" | "blue" | "emerald";
-};
+import {
+  ArrowDownRight,
+  ArrowRight,
+  FolderKanban,
+  Trash2,
+} from "lucide-react";
+import type { Project } from "@/lib/dashboard-types";
 
 type ProjectProgressProps = {
   projects: Project[];
+  onDeleteProject: (project: Project) => void;
+  isDeletingProject: boolean;
 };
 
 const colorStyles: Record<Project["color"], string> = {
@@ -23,7 +25,11 @@ const progressStyles: Record<Project["color"], string> = {
   emerald: "bg-emerald-500",
 };
 
-export default function ProjectProgress({ projects }: ProjectProgressProps) {
+export default function ProjectProgress({
+  projects,
+  onDeleteProject,
+  isDeletingProject,
+}: ProjectProgressProps) {
   return (
     <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
       <div className="mb-6 flex items-center justify-between">
@@ -44,7 +50,7 @@ export default function ProjectProgress({ projects }: ProjectProgressProps) {
               : 0;
 
           return (
-            <article key={project.name}>
+            <article key={project.id}>
               <div className="mb-3 flex items-center gap-3">
                 <div
                   className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${colorStyles[project.color]}`}
@@ -61,9 +67,20 @@ export default function ProjectProgress({ projects }: ProjectProgressProps) {
                   </p>
                 </div>
 
-                <span className="text-sm font-bold text-slate-700">
+                <span className="shrink-0 text-sm font-bold text-slate-700">
                   {percentage}%
                 </span>
+
+                <button
+                  type="button"
+                  onClick={() => onDeleteProject(project)}
+                  disabled={isDeletingProject}
+                  aria-label={`Delete project ${project.name}`}
+                  title="Delete project and its tasks"
+                  className="shrink-0 rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                >
+                  <Trash2 size={16} />
+                </button>
               </div>
 
               <div
@@ -82,6 +99,12 @@ export default function ProjectProgress({ projects }: ProjectProgressProps) {
             </article>
           );
         })}
+
+        {projects.length === 0 && (
+          <p className="py-6 text-center text-sm text-slate-500">
+            No projects yet. Create a project to get started.
+          </p>
+        )}
       </div>
 
       <div className="mt-8 rounded-xl bg-indigo-50 p-4">

@@ -1,10 +1,13 @@
-import { Check, Circle, Search } from "lucide-react";
 
-import { Priority, Task } from "@/lib/dashboard-types";
+import { Check, Circle, Search, Pencil, Trash2 } from "lucide-react";
+
+import type { Priority, Task } from "@/lib/dashboard-types";
 
 type TaskListProps = {
   tasks: Task[];
   onToggleTask: (id: string) => void;
+  onEditTask: (task: Task) => void;
+  onDeleteTask: (task: Task) => void;
 };
 
 const priorityStyles: Record<Priority, string> = {
@@ -13,7 +16,12 @@ const priorityStyles: Record<Priority, string> = {
   Low: "bg-sky-50 text-sky-700 ring-sky-100",
 };
 
-export default function TaskList({ tasks, onToggleTask }: TaskListProps) {
+export default function TaskList({
+  tasks,
+  onToggleTask,
+  onEditTask,
+  onDeleteTask,
+}: TaskListProps) {
   return (
     <section className="min-w-0 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
       <div className="mb-6 flex items-center justify-between gap-3">
@@ -85,6 +93,28 @@ export default function TaskList({ tasks, onToggleTask }: TaskListProps) {
             <span className="hidden w-16 shrink-0 text-right text-xs text-slate-500 lg:block">
               {task.due}
             </span>
+
+            <div className="flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                onClick={() => onEditTask(task)}
+                aria-label={`Edit ${task.title}`}
+                title="Edit task"
+                className="rounded-lg p-2 text-slate-400 transition hover:bg-indigo-50 hover:text-indigo-600"
+              >
+                <Pencil size={16} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onDeleteTask(task)}
+                aria-label={`Delete ${task.title}`}
+                title="Delete task"
+                className="rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
           </div>
         ))}
 
@@ -100,8 +130,8 @@ export default function TaskList({ tasks, onToggleTask }: TaskListProps) {
       </div>
 
       <p className="mt-5 text-xs leading-5 text-slate-400">
-        Click a task&apos;s circle to change its completion status. Changes
-        currently exist only in memory.
+        Use the circle to change completion status, or the pencil and trash
+        icons to edit or delete a task.
       </p>
     </section>
   );
