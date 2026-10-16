@@ -597,7 +597,7 @@ export default function DashboardClient({
                     }}
                     className="mt-3 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
                   >
-                    Create a project
+                    Create a Project
                   </button>
                 </div>
               ) : (
