@@ -45,14 +45,14 @@ type DashboardClientProps = {
   initialTasks: Task[];
   projects: Project[];
   projectOptions: ProjectOption[];
-  userName:string;
+  userName: string;
 };
 
 export default function DashboardClient({
   initialTasks,
   projects,
   projectOptions,
-  userName
+  userName,
 }: DashboardClientProps) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [search, setSearch] = useState("");
@@ -99,8 +99,6 @@ export default function DashboardClient({
       return matchesSearch && matchesNavigation;
     });
   }, [tasks, search, activeNav]);
-
-
 
   const completedCount = tasks.filter(
     (task) => task.status === "Completed",
@@ -286,7 +284,6 @@ export default function DashboardClient({
     }
   }
 
-
   return (
     <div className="min-h-screen bg-[#f7f8fc] text-slate-900">
       <div className="flex min-h-screen">
@@ -359,11 +356,12 @@ export default function DashboardClient({
             {/* Welcome */}
             <section className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
               <div>
-                <p className="mb-2 text-sm font-medium text-indigo-600">
-                  <RealTimeDateDisplay/>
-                </p>
+                <div className="mb-2 text-sm font-medium text-indigo-600">
+                  <RealTimeDateDisplay />
+                </div>
+
                 <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                  Good morning, {userName || "There"} 👋
+                  Hello, {userName || "There"} 👋
                 </h1>
                 <p className="mt-2 text-sm text-slate-500 sm:text-base">
                   Here&apos;s what&apos;s happening with your projects today.
@@ -546,7 +544,7 @@ export default function DashboardClient({
               <button
                 type="button"
                 onClick={() => setIsTaskFormOpen(false)}
-                disabled={isSaving || projectOptions.length === 0}
+                disabled={isSaving}
                 aria-label="Close form"
                 className="rounded-lg p-2 hover:bg-slate-100"
               >
@@ -579,21 +577,43 @@ export default function DashboardClient({
               >
                 Project
               </label>
-              <select
-                id="task-project"
-                value={selectedProjectId}
-                onChange={(event) => setSelectedProjectId(event.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-indigo-400"
-              >
-                {projectOptions.length === 0 && (
-                  <option value="">No projects available</option>
-                )}
-                {projectOptions.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.name}
-                  </option>
-                ))}
-              </select>
+
+              {projectOptions.length === 0 ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-sm font-medium text-amber-900">
+                    You haven't created a project yet.
+                  </p>
+                  <p className="mt-1 text-sm text-amber-800">
+                    Create a project first, then you can add tasks to it.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsTaskFormOpen(false);
+                      setEditingTask(null);
+                      setProjectName("");
+                      setProjectFormError("");
+                      setIsProjectFormOpen(true);
+                    }}
+                    className="mt-3 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                  >
+                    Create a project
+                  </button>
+                </div>
+              ) : (
+                <select
+                  id="task-project"
+                  value={selectedProjectId}
+                  onChange={(event) => setSelectedProjectId(event.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-indigo-400"
+                >
+                  {projectOptions.map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -647,7 +667,7 @@ export default function DashboardClient({
               <button
                 type="button"
                 onClick={() => setIsTaskFormOpen(false)}
-                disabled={isSaving || projectOptions.length === 0}
+                disabled={isSaving}
                 className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold hover:bg-slate-50 disabled:opacity-50"
               >
                 Cancel
@@ -655,7 +675,7 @@ export default function DashboardClient({
 
               <button
                 type="submit"
-                disabled={isSaving || projectOptions.length === 0}
+                disabled={isSaving}
                 className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSaving

@@ -29,8 +29,7 @@ export const RealTimeDateDisplay: React.FC = () => {
   }, []);
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'monospace' }}>
-      <h2>Live System Date:</h2>
+    <div>
       <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#0070f3' }}>
         {formatToLongUppercaseDate(currentDate)}
       </div>

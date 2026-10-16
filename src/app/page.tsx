@@ -4,7 +4,6 @@ import { getSession } from "@/lib/get-session";
 import { getDashboardData } from "@/lib/dashboard";
 import DashboardClient from "@/components/DashboardClient";
 import type { Project, Task, ProjectOption } from "@/lib/dashboard-types";
-import { username } from "better-auth/plugins";
 
 async function DashboardData({
   userId,

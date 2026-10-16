@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate --config prisma7.config.ts && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:deploy": "prisma migrate deploy --config prisma7.config.ts"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "^1.7.9",
