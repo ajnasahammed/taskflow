@@ -16,11 +16,11 @@ import {
 
 const navigation = [
   { label: "Dashboard", icon: LayoutDashboard },
-  { label: "Projects", icon: FolderKanban },
+  // { label: "Projects", icon: FolderKanban },
   { label: "My Tasks", icon: ClipboardList },
-  { label: "Calendar", icon: CalendarDays },
-  { label: "Team", icon: Users },
-  { label: "Settings", icon: Settings },
+  // { label: "Calendar", icon: CalendarDays },
+  // { label: "Team", icon: Users },
+  // { label: "Settings", icon: Settings },
 ];
 
 type SidebarProps = {
