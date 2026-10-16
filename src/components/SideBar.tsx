@@ -28,6 +28,7 @@ type SidebarProps = {
   onNavigate: (label: string) => void;
   mobileMenuOpen: boolean;
   onClose: () => void;
+  userName: string;
 };
 
 export default function SideBar({
@@ -35,6 +36,7 @@ export default function SideBar({
   onNavigate,
   mobileMenuOpen,
   onClose,
+  userName
 }: SidebarProps) {
   const router = useRouter();
 
@@ -138,13 +140,13 @@ export default function SideBar({
         <div className="mt-auto border-t border-white/10 p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-500 font-semibold text-white">
-              JD
+              {userName.slice(0,2).toUpperCase()}
             </div>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-white">
-                John Doe
+                {userName.toUpperCase()}
               </p>
-              <p className="truncate text-xs text-slate-400">Demo workspace</p>
+              <p className="truncate text-xs text-slate-400">{userName.trim().split(" ")[0].toUpperCase()}'s workspace</p>
             </div>
           </div>
         </div>

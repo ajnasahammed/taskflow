@@ -305,6 +305,7 @@ export default function DashboardClient({
           onNavigate={setActiveNav}
           mobileMenuOpen={mobileMenuOpen}
           onClose={() => setMobileMenuOpen(false)}
+          userName={userName}
         />
 
         {/* Main content */}
@@ -361,7 +362,7 @@ export default function DashboardClient({
                 </div>
 
                 <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                  Hello, {userName || "There"} 👋
+                  Hello, {userName.charAt(0).toUpperCase() + userName.slice(1).toLowerCase() || "There"}
                 </h1>
                 <p className="mt-2 text-sm text-slate-500 sm:text-base">
                   Here&apos;s what&apos;s happening with your projects today.

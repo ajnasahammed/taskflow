@@ -1,0 +1,17 @@
+name: Database Keep Alive
+
+on:
+  schedule:
+    - cron: "0 */5 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping-database:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping database
+        run: |
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.APP_URL }}/api/keep-alive"
