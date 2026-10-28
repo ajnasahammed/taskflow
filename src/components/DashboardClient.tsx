@@ -348,7 +348,7 @@ export default function DashboardClient({
               </button>
               <div className="hidden h-8 w-px bg-slate-200 sm:block" />
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700">
-                {userName.slice(0,1)||"GE"}
+                {userName.slice(0,2).toUpperCase()||"GE"}
               </div>
             </div>
           </header>
